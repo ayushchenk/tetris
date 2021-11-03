@@ -5,13 +5,15 @@ import { Block } from "./Block";
 import { Shape } from "./Shape";
 
 export class BaseShape implements Shape {
-    private  readonly blocks: Block[];
-    
+    public readonly blocks: Block[];
+
     public readonly container: Container;
 
     constructor() {
         this.blocks = [];
         this.container = new Container();
+        this.container.width = window.innerWidth;
+        this.container.height = window.innerHeight;
     }
 
     public get bottom(): Block {
@@ -62,11 +64,11 @@ export class BaseShape implements Shape {
         return this.blocks.filter(block => block.graphics.x == right.graphics.x);;
     }
 
-    public rotate(): void { }
+    public rotate(allBlocks: Block[]): void { }
 
     //true if can move
-    public move(direction: Direction, shapes: Shape[]): boolean {
-        const canMove = this.checkDirection(direction, shapes);
+    public move(direction: Direction, blocks: Block[]): boolean {
+        const canMove = this.checkDirection(direction, blocks);
 
         if (canMove) {
             this.blocks.forEach(block => block.move(direction));
@@ -75,74 +77,70 @@ export class BaseShape implements Shape {
         return canMove;
     }
 
-    private checkDirection(direction: Direction, shapes: Shape[]): boolean {
+    private checkDirection(direction: Direction, blocks: Block[]): boolean {
         switch (direction) {
             case Direction.Down:
-                return this.checkDown(shapes);
+                return this.checkDown(blocks);
             case Direction.Right:
-                return this.checkRight(shapes);
+                return this.checkRight(blocks);
             case Direction.Left:
-                return this.checkLeft(shapes);
+                return this.checkLeft(blocks);
         }
     }
 
-    private checkDown(shapes: Shape[]): boolean {
-        const y = this.getHigestObstacleUnderShape(shapes);
+    private checkDown(blocks: Block[]): boolean {
+        const y = this.getHigestObstacleUnderShape(blocks);
 
         return this.bottom.graphics.y != y;
     }
 
-    private checkLeft(shapes: Shape[]): boolean {
+    private checkLeft(blocks: Block[]): boolean {
         let canMove = true;
 
-        shapes.forEach(otherShape => {
-            otherShape.right.forEach(otherRightBlock => {
-                this.left.forEach(thisLeftBlock => {
-                    if (thisLeftBlock.graphics.y == otherRightBlock.graphics.y && thisLeftBlock.graphics.x - Settings.Block.size == otherRightBlock.graphics.x) {
-                        canMove = false;
-                    }
-                })
-            });
+        blocks.forEach(otherBlock => {
+            this.left.forEach(thisLeftBlock => {
+                if (thisLeftBlock.graphics.y == otherBlock.graphics.y && thisLeftBlock.graphics.x - Settings.Block.size == otherBlock.graphics.x) {
+                    canMove = false;
+                }
+            })
         });
 
         return canMove;
     }
 
-    private checkRight(shapes: Shape[]): boolean {
+    private checkRight(blocks: Block[]): boolean {
         let canMove = true;
 
-        shapes.forEach(otherShape => {
-            otherShape.left.forEach(otherLeftBlock => {
-                this.right.forEach(thisRightBlock => {
-                    if (thisRightBlock.graphics.y == otherLeftBlock.graphics.y && thisRightBlock.graphics.x + Settings.Block.size == otherLeftBlock.graphics.x) {
-                        canMove = false;
-                    }
-                })
-            });
+        blocks.forEach(otherBlock => {
+            this.right.forEach(thisRightBlock => {
+                if (thisRightBlock.graphics.y == otherBlock.graphics.y && thisRightBlock.graphics.x + Settings.Block.size == otherBlock.graphics.x) {
+                    canMove = false;
+                }
+            })
         });
 
         return canMove;
     }
 
-    private getHigestObstacleUnderShape(shapes: Shape[]): number {
+    private getHigestObstacleUnderShape(blocks: Block[]): number {
         const curBotY = this.bottom.graphics.y;
         const curLeftX = this.left[0].graphics.x;
         const curRightX = this.right[0].graphics.x;
 
-        const shapesBeneath = shapes.filter(shape => ((curLeftX <= shape.right[0].graphics.x && curLeftX >= shape.left[0].graphics.x) || (curRightX <= shape.right[0].graphics.x && curRightX >= shape.left[0].graphics.x)) && shape.top.graphics.y >= curBotY + Settings.Block.size);
+        const blocksBeneath = blocks.filter(block => ((curLeftX <= block.graphics.x && curLeftX >= block.graphics.x) || (curRightX <= block.graphics.x && curRightX >= block.graphics.x)) && block.graphics.y >= curBotY + Settings.Block.size);
 
-        if (shapesBeneath.length == 0) {
+        if (blocksBeneath.length == 0) {
             return Settings.App.height - Settings.Block.size;
         }
 
-        let highest = shapesBeneath[0];
+        let highest = blocksBeneath[0];
 
-        shapesBeneath.forEach(shape => {
-            if (shape.top.graphics.y < highest.top.graphics.y) {
-                highest = shape;
+        blocksBeneath.forEach(block => {
+            if (block.graphics.y < highest.graphics.y) {
+                highest = block;
             }
         });
 
-        return highest.top.graphics.y - Settings.Block.size;
+        return highest.graphics.y - Settings.Block.size;
     }
 }

@@ -4,6 +4,7 @@ export class Settings {
         public static readonly green: number = 0x00ff00;
         public static readonly blue: number = 0x0000ff;
         public static readonly yellow: number = 0xffff00;
+        public static readonly cyan: number = 0x00ffff;
         public static readonly black: number = 0x0;
     }
 
@@ -19,5 +20,9 @@ export class Settings {
         public static readonly columns: number = 10;
         public static readonly rows: number = 20;
         public static readonly FPS: number = 1;
+    }
+
+    static ShapeI = class {
+        public static readonly count: number = 4;
     }
 }

@@ -12,9 +12,6 @@ const app = new Application({
 	height: Settings.App.height
 });
 
-console.log("xAxis: " + Settings.App.xAxis);
-console.log("height: " + Settings.App.height);
-
 const scene = new Scene();
 
 app.stage.addChild(scene);

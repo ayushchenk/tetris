@@ -1,21 +1,32 @@
 import { Container, Ticker } from "pixi.js";
 import { Direction } from "./common/Direction";
 import { Settings } from "./common/Settings";
-import { Block } from "./shapes/Block";
+import { ShapeI } from "./shapes/ShapeI";
 import { Shape } from "./shapes/Shape";
-import { Square } from "./shapes/Square";
+import { ShapeO } from "./shapes/ShapeO";
+import { Block } from "./shapes/Block";
+import { ShapeL } from "./shapes/ShapeL";
 
 export class Scene extends Container {
     private readonly placedShapes: Shape[] = [];
     private currentShape: Shape;
+
+    private get allBlocks(): Block[] {
+        const allBlocks: Block[] = [];
+
+        this.placedShapes.forEach(shape => {
+            allBlocks.push(...shape.blocks);
+        });
+
+        return allBlocks;
+    }
 
     constructor() {
         super();
 
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
 
-        this.currentShape = new Square(Settings.App.xAxis, Settings.Colors.yellow);
-        this.addChild(this.currentShape.container);
+        this.spawnNewShape();
 
         Ticker.shared.minFPS = 1;
         Ticker.shared.maxFPS = Settings.App.FPS;
@@ -23,10 +34,15 @@ export class Scene extends Container {
     }
 
     private handleKeyDown(e: KeyboardEvent): void {
-        if (Direction.AllDirections.filter(dir => dir.keyCode == e.code).length > 0) {
-            const direction = Direction.AllDirections.find(dir => dir.keyCode == e.code);
-
-            this.moveShape(direction);
+        switch (e.code) {
+            case Direction.Left.keyCode:
+                return this.moveShape(Direction.Left);
+            case Direction.Right.keyCode:
+                return this.moveShape(Direction.Right);
+            case Direction.Down.keyCode:
+                return this.moveShape(Direction.Down);
+            case Direction.Up.keyCode:
+                return this.currentShape.rotate(this.allBlocks);
         }
     }
 
@@ -34,17 +50,37 @@ export class Scene extends Container {
         this.moveShape(Direction.Down);
     }
 
-    private moveShape(direction: Direction) {
-        const canMove = this.currentShape.move(direction, this.placedShapes);
+    private moveShape(direction: Direction): void {
+        const canMove = this.currentShape.move(direction, this.allBlocks);
+
+        if (!canMove && this.currentShape.top.graphics.y <= 0) {
+            Ticker.shared.destroy();
+            alert("Game over");
+            return;
+        }
 
         if (!canMove && direction == Direction.Down) {
             this.spawnNewShape();
         }
     }
 
-    private spawnNewShape() {
-        this.placedShapes.push(this.currentShape);
-        this.currentShape = new Square(Settings.App.xAxis, Settings.Colors.yellow);
+    private spawnNewShape(): void {
+        if (this.currentShape) {
+            this.placedShapes.push(this.currentShape);
+        }
+
+        this.currentShape = this.generateRandomShape();
+
         this.addChild(this.currentShape.container);
+    }
+
+    private generateRandomShape(): Shape {
+        const randomNumber = Math.round(Math.random() * 2);
+
+        switch (randomNumber) {
+            case 0: return new ShapeO();
+            case 1: return new ShapeI();
+            case 2: return new ShapeL();
+        }
     }
 }
