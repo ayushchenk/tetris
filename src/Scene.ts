@@ -54,7 +54,7 @@ export class Scene extends Container {
         const canMove = this.currentShape.move(direction, this.allBlocks);
 
         if (!canMove && this.currentShape.top.graphics.y <= 0) {
-            Ticker.shared.destroy();
+            Ticker.shared.stop();
             alert("Game over");
             return;
         }
