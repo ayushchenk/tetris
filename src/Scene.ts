@@ -15,7 +15,6 @@ export class Scene extends Container {
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
 
         this.currentShape = new Square(Settings.App.xAxis, Settings.Colors.yellow);
-        this.currentShape.onMove.on(this.shapeMove.bind(this));
         this.addChild(this.currentShape.container);
 
         Ticker.shared.minFPS = 1;
@@ -26,48 +25,26 @@ export class Scene extends Container {
     private handleKeyDown(e: KeyboardEvent): void {
         if (Direction.AllDirections.filter(dir => dir.keyCode == e.code).length > 0) {
             const direction = Direction.AllDirections.find(dir => dir.keyCode == e.code);
-            
-            this.currentShape.move(direction);
+
+            this.moveShape(direction);
         }
     }
 
     private tick(): void {
-        this.currentShape.move(Direction.Down);
+        this.moveShape(Direction.Down);
     }
 
-    private getHigestObstacleUnderShape(): number {
-        const curLeftX = this.currentShape.left.graphics.x;
-        const curRightX = this.currentShape.right.graphics.x;
+    private moveShape(direction: Direction) {
+        const canMove = this.currentShape.move(direction, this.placedShapes);
 
-        const shapesBeneath = this.placedShapes.filter(shape => (curLeftX <= shape.right.graphics.x && curLeftX >= shape.left.graphics.x) || (curRightX <= shape.right.graphics.x && curRightX >= shape.left.graphics.x));
-
-        if (shapesBeneath.length == 0) {
-            return Settings.App.height - Settings.Block.size;
+        if (!canMove && direction == Direction.Down) {
+            this.spawnNewShape();
         }
-
-        let highest = shapesBeneath[0];
-
-        shapesBeneath.forEach(shape => {
-            if (shape.top.graphics.y < highest.top.graphics.y) {
-                highest = shape;
-            }
-        });
-
-        return highest.top.graphics.y - Settings.Block.size;
     }
 
-    private shapeMove() {
-        const y = this.getHigestObstacleUnderShape();
-        console.log("moved: " + y + "  " + this.currentShape.bottom.graphics.y);
-        
-        if(this.currentShape.bottom.graphics.y == y){
-            this.currentShape.onMove.off();
-
-            this.placedShapes.push(this.currentShape);
-
-            this.currentShape = new Square(Settings.App.xAxis, Settings.Colors.yellow);
-            this.currentShape.onMove.on(this.shapeMove.bind(this));
-            this.addChild(this.currentShape.container);
-        }
+    private spawnNewShape() {
+        this.placedShapes.push(this.currentShape);
+        this.currentShape = new Square(Settings.App.xAxis, Settings.Colors.yellow);
+        this.addChild(this.currentShape.container);
     }
 }
